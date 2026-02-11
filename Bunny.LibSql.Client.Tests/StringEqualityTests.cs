@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Bunny.LibSql.Client.LINQ;
 using Bunny.LibSql.Client.SQL;
 
 namespace Bunny.LibSql.Client.Tests;
