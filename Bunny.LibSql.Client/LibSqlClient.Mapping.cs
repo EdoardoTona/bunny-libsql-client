@@ -126,6 +126,14 @@ namespace Bunny.LibSql.Client
                             Base64 = b
                         });
                     }
+                    else if (arg is bool boolVal)
+                    {
+                        libSqlValues.Add(new LibSqlValue()
+                        {
+                            Type = LibSqlValueType.Integer,
+                            Value = (boolVal ? 1 : 0).ToString()
+                        });
+                    }
                     else if (arg is DateTime dt)
                     {
                         libSqlValues.Add(new LibSqlValue()

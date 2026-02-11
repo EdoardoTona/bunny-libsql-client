@@ -17,8 +17,15 @@ public class SqlQueryBuilder
         {
             if (property.PropertyType.IsLibSqlSupportedType() && property.GetValue(item) != null)
             {
+                object? value = property.GetValue(item);
+                if (value is ILibSqlType libSqlType)
+                {
+                    value = libSqlType.GetLibSqlJsonValue();
+                }
+                if (value == null) continue;
+
                 setClauses.Add($"{property.GetLibSqlColumnName()} = ?");
-                parameters.Add(property.GetValue(item));
+                parameters.Add(value);
             }
         }
         var setClauseString = string.Join(", ", setClauses);
