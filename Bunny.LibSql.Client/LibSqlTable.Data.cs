@@ -65,16 +65,19 @@ public partial class LibSqlTable<T>
             return;
         }
 
-        var newKey = pipelineResponse?.Results?.Skip(itemIndex).FirstOrDefault()?.Response?.Result?.LastInsertRowId;
-        if (newKey == null) return;
+        var rawKey = pipelineResponse?.Results?.Skip(itemIndex).FirstOrDefault()?.Response?.Result?.LastInsertRowId;
+        if (rawKey == null) return;
+
+        // LastInsertRowId may be deserialized as JsonElement from JSON responses
+        var newKey = rawKey is System.Text.Json.JsonElement jsonEl ? jsonEl.GetInt64() : Convert.ToInt64(rawKey);
 
         if (keyProperty.PropertyType == typeof(int))
         {
-            keyProperty.SetValue(item, Convert.ToInt32(newKey));
+            keyProperty.SetValue(item, (int)newKey);
         }
         else if (keyProperty.PropertyType == typeof(long))
         {
-            keyProperty.SetValue(item, Convert.ToInt64(newKey));
+            keyProperty.SetValue(item, newKey);
         }
         else if (keyProperty.PropertyType == typeof(string))
         {
