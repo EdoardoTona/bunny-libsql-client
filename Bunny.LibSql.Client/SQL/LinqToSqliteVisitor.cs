@@ -440,25 +440,18 @@ public class LinqToSqliteVisitor : ExpressionVisitor
                  node.Arguments.Count == 2)
         {
             Visit(node.Arguments[1]); // This should be the column (e.g., x.Column)
-            _sqlBuilder.Append(" IN (");
-
-            var listExpression = node.Arguments[0];
-            var list = GetExpressionValue(listExpression) as IEnumerable;
-            if (list == null)
-            {
-                throw new NotSupportedException("Contains argument must be a collection.");
-            }
-
-            bool first = true;
-            foreach (var item in list)
-            {
-                if (!first) _sqlBuilder.Append(", ");
-                _sqlBuilder.Append("?");
-                AddParameter(item);
-                first = false;
-            }
-            _sqlBuilder.Append(")");
-            return node; // Handled
+            AppendInClause(node.Arguments[0]);
+            return node;
+        }
+        // Handle instance List<T>.Contains / ICollection<T>.Contains (e.g., categoryIds.Contains(x.Id))
+        else if (node.Method.Name == "Contains" &&
+                 node.Object != null &&
+                 node.Arguments.Count == 1 &&
+                 node.Method.DeclaringType != typeof(string))
+        {
+            Visit(node.Arguments[0]); // The column (e.g., x.Id)
+            AppendInClause(node.Object);
+            return node;
         }
 
 
@@ -705,6 +698,27 @@ public class LinqToSqliteVisitor : ExpressionVisitor
         }
 
         return member.Name;
+    }
+
+    private void AppendInClause(Expression listExpression)
+    {
+        _sqlBuilder.Append(" IN (");
+
+        var list = GetExpressionValue(listExpression) as IEnumerable;
+        if (list == null)
+        {
+            throw new NotSupportedException("Contains argument must be a collection.");
+        }
+
+        bool first = true;
+        foreach (var item in list)
+        {
+            if (!first) _sqlBuilder.Append(", ");
+            _sqlBuilder.Append('?');
+            AddParameter(item);
+            first = false;
+        }
+        _sqlBuilder.Append(')');
     }
 
     private object GetExpressionValue(Expression expression)
